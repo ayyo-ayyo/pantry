@@ -1,95 +1,105 @@
 import Image from "next/image";
-import styles from "./page.module.css";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, RadioGroup, Stack } from "@mui/material";
+import * as React from 'react';
+import Paper from '@mui/material/Paper';
+import InputBase from '@mui/material/InputBase';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
+import DirectionsIcon from '@mui/icons-material/Directions';
+import { Add, Remove, Visibility } from "@mui/icons-material";
+import { TextField } from "@mui/material";
+import { FormControlLabel, Radio } from "@mui/material";
 
 export default function Home() {
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <Stack width={"100%"} height={"100%"} justifyContent={"center"} alignItems={"center"}>
+      <SearchBar />
+      <Filters />
+      <PantryItem name="Apple" quantity="1" />
+    </Stack>
   );
+}
+export function SearchBar() {
+  return (
+    <Paper
+      component="form"
+      sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: '70vw' }}
+    >
+      <IconButton sx={{ p: '10px' }} aria-label="menu">
+        <MenuIcon />
+      </IconButton>
+      <InputBase
+        sx={{ ml: 1, flex: 1 }}
+        placeholder="Search Pantry"
+        inputProps={{ 'aria-label': 'search pantry' }}
+      />
+      <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+        <SearchIcon />
+      </IconButton>
+      <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+      <IconButton color="primary" sx={{ p: '10px' }} aria-label="plus">
+        <Add />
+      </IconButton>
+    </Paper>
+  );
+}
+
+export function Filters(){
+  return (
+    <Paper sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: '70vw' }}>
+      <Grid container sx={{ width: '70vw'}} spacing={2}>
+        <Grid item xs={2}>
+          Quantity
+        </Grid>
+        <Grid item xs={2} md={1}>
+          <TextField></TextField>
+        </Grid>
+        <Grid item xs={8}>
+          <RadioGroup row>
+            <FormControlLabel value=">" control={<Radio />} label="Greater than" />
+            <FormControlLabel value="<" control={<Radio />} label="Less than" />
+            <FormControlLabel value="=" control={<Radio />} label="Equal to" />
+          </RadioGroup>
+        </Grid>
+        <Grid item xs={1}>
+          Tags
+        </Grid>
+        <Grid item xs={6}>
+          <TextField></TextField>
+        </Grid>
+      </Grid>
+    </Paper>
+  )
+}
+
+export function PantryItem(props) {
+  return (
+    <Paper sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: '70vw' }}>
+      <Grid container sx={{ width: '70vw'}} spacing={1}>
+       <Grid item xs={2}>
+       <Image src={props.image} alt="Pantry Item" width={100} height={100} />
+       </Grid>
+        <Grid item xs={10}>
+          {props.name}
+        </Grid>
+        <Grid item xs={2}>Quantity</Grid>
+        <Grid item xs={1}>
+          <IconButton color="primary" sx={{ p: '10px' }} aria-label="plus">
+            <Remove />
+          </IconButton>
+        </Grid>
+      
+        <Grid item xs={1.1}>
+          <TextField value={props.quantity}></TextField>
+        </Grid>
+        <Grid item xs={1}>
+          <IconButton color="primary" sx={{ p: '10px' }} aria-label="plus">
+            <Add />
+          </IconButton>
+        </Grid>
+      </Grid>
+    </Paper>
+  )
 }
