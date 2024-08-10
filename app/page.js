@@ -13,6 +13,7 @@ export default function Home() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
+  const [id, setId] = useState("");
   const [itemQuantity, setItemQuantity] = useState(0);
   const [itemTags, setItemTags] = useState([]);
   const [addEdit, setAddEdit] = useState("Add");
@@ -31,78 +32,87 @@ export default function Home() {
     setInventory(inventoryList);
   }
 
+  //function to make randome alphanumeric strings
+  function makeid(length) {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
   const addItem = async (item) => {
-    const docRef = await doc(collection(firestore, "inventory"), item);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    let id = makeid(10);
+    let docRef = await doc(collection(firestore, "inventory"), id);
+    let docSnap = await getDoc(docRef);
+    while (docSnap.exists()) {
       //item already exists
-      alert("Item already exists")
-      return;
+      id = makeid(10);
+      docRef = await doc(collection(firestore, "inventory"), id);
+      docSnap = await getDoc(docRef);
     }
-    await setDoc(docRef, {
-      img: itemImage,
-      name: itemName,
-      quantity: itemQuantity,
-      tags: itemTags
-    })
-    await updateInventory();
-  }
-  const removeItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item); 
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      await deleteDoc(docRef);
+    const snap4All = query(collection(firestore, "inventory"));
+    const docs4All = await getDocs(snap4All);
+    //check if item is in inventory
+    let itemExists = false;
+    for (let i = 0; i < docs4All.length; i++) {
+      if (docs4All[i].data().name === item) {
+        itemExists = true;
+        break;
+      }
     }
-    await updateInventory();
-  }
-
-  const editItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists() && (item === itemName || itemName == "")) {
-      console.log(itemTags);
-      console.log(docSnap.data().tags);
+    if (!itemExists) {
       await setDoc(docRef, {
-        img: itemImage || docSnap.data().img,
-        name: itemName === "" ? docSnap.data().name : itemName,
-        quantity: itemQuantity || docSnap.data().quantity,
-        tags: itemTags || docSnap.data().tags
-      })
+        id: id,
+        img: itemImage,
+        name: itemName,
+        quantity: itemQuantity,
+        tags: itemTags
+      });
     }
-    else if (docSnap.exists()) {
+    else {
+      alert("item already exists");
+    }
+    await updateInventory();
+    return id;
+  }
+  const removeItem = async (id) => {
+    const docRef = doc(collection(firestore, "inventory"), id); 
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
       await deleteDoc(docRef);
-      await addItem(item);
     }
     await updateInventory();
   }
 
-  const increaseItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
+  const editItem = async (id) => {
+    const docRef = doc(collection(firestore, "inventory"), id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      await updateDoc(docRef, {
-        quantity: docSnap.data().quantity + 1
+      await setDoc(docRef, {
+        id: id,
+        img: itemImage,
+        name: itemName,
+        quantity: itemQuantity,
+        tags: itemTags
       });
+    }
+    else {
+      alert("item does not exist");
     }
     await updateInventory();
   }
-  const decreaseItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      await updateDoc(docRef, {
-        quantity: docSnap.data().quantity - 1
-      });
-    }
-    await updateInventory();
-  }
+
+
 
   useEffect(() => {
     updateInventory();
   }, []) //calls function when array passed in is updated
 
-  const handleOpen = (image, name, quantity, tags, AOE = "Add") => {
-    
+  const handleOpen = (image, name, quantity, tags, AOE = "Add", id) => {
+    setId(id);
     setAddEdit(AOE);
     setItemImage(image || null);
     setItemName(name || "");
@@ -120,16 +130,17 @@ export default function Home() {
   };
   return (
     <Stack width={"100%"} height={"100%"} justifyContent={"center"} alignItems={"center"} spacing={2}>
+      
       <SearchBar setItems={setInventory} items={inventory} reset={updateInventory}/>
       <Button onClick={handleOpen}>Add Item</Button>
       <Filters items={inventory} setItems={setInventory} resetFilters={updateInventory}/>
       <Box height="75vh" overflow={"scroll"} >{inventory.map((item) =>{
         
-        return (<PantryItem key={item.name} item={item} image={item.img} name={item.name} quantity={item.quantity} tags={item.tags} removeItem={removeItem} increaseItem={increaseItem} decreaseItem={decreaseItem} handleClose={handleClose} handleOpen={handleOpen} setTags={setItemTags} editItem={editItem} />);
+        return (<PantryItem key={item.name} id={item.id} item={item} image={item.img} name={item.name} quantity={item.quantity} tags={item.tags} removeItem={removeItem} handleClose={handleClose} handleOpen={handleOpen} setTags={setItemTags} editItem={editItem} />);
         }) 
       }</Box>
       {/*Add Item Modal*/}
-      <ItemMenu open={open} handleClose={handleClose} addOrEdit={addEdit} setItemImage={setItemImage} itemImage={itemImage} itemName={itemName} setItemName={setItemName} itemQuantity={itemQuantity} setItemQuantity={setItemQuantity} itemTags={itemTags} setItemTags={setItemTags} addItem={addItem} editItem={editItem}/>
+      <ItemMenu id={id} open={open} handleClose={handleClose} addOrEdit={addEdit} setItemImage={setItemImage} itemImage={itemImage} itemName={itemName} setItemName={setItemName} itemQuantity={itemQuantity} setItemQuantity={setItemQuantity} itemTags={itemTags} setItemTags={setItemTags} addItem={addItem} editItem={editItem} />
     
         
     </Stack>
@@ -195,7 +206,7 @@ export function Filters(props){
         </Grid>
         <Grid item xs={1}>
           <Button onClick={() => {
-            props.setItems(props.items.filter(item => tags.every(tag => item.tags.includes(tag))));
+            props.setItems(props.items.filter(item => tags.every(tag => item.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase()))));
           }}
           >Filter</Button>
         </Grid>
@@ -220,7 +231,7 @@ export function Tag(props) {
         if (props.itemName !== null && props.itemName !== undefined && props.itemName !== ""){
           console.log(props.itemName);
           console.log("editing item in database")
-          props.editItem(props.itemName).catch((e) => console.log(e));
+          props.editItem(props.id).catch((e) => console.log(e));
         }
       }}>
         
@@ -246,7 +257,7 @@ export function PantryItem(props) {
             //edit in firebase
             
             setOpen(true);
-            props.handleOpen(props.item.img, props.item.name, props.item.quantity, props.item.tags, "Edit");
+            props.handleOpen(props.item.img, props.item.name, props.item.quantity, props.item.tags, "Edit", props.id);
 
           }}>
             <Edit />
@@ -256,7 +267,7 @@ export function PantryItem(props) {
           <IconButton color="primary" sx={{ p: '10px' }} aria-label="delete" onClick={() => {
             //delete from firebase
             
-            props.removeItem(props.name);
+            props.removeItem(props.id);
           }}>
             <Delete />
           </IconButton>
@@ -269,7 +280,7 @@ export function PantryItem(props) {
         <Grid item xs={6}>
           Tags:
           <Box display={'flex'} flexWrap={'wrap'} gap={1}>{props.tags.
-          map((tag) => <Tag key={tag} x={false} tag={tag} itemName={props.name} tags={props.tags} setTags={props.setTags} editItem={props.editItem}  />)}</Box>
+          map((tag) => <Tag key={tag} id={props.id} x={false} tag={tag} itemName={props.name} tags={props.tags} setTags={props.setTags} editItem={props.editItem}  />)}</Box>
         </Grid>
         </Grid>
         
@@ -328,9 +339,9 @@ export function ItemMenu(props) {
           </Stack>
         </Grid>
         <Grid item xs={3}>
-          <Button onClick={async () => {
+          <Button  onClick={async () => {
             if (props.addOrEdit === "Add") {await props.addItem(props.itemName);}
-            else {await props.editItem(props.itemName);}
+            else {await props.editItem(props.id);}
             props.handleClose();
           }} sx={{border: 1}}>{ props.addOrEdit === "Add" ? "Add" : "Edit"}</Button>
         </Grid>
